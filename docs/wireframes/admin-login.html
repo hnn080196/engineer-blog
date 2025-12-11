@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | Engineer Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Fira+Code:wght@400;500&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-heading: 'Crimson Pro', Georgia, serif;
+      --font-body: 'Lora', Georgia, serif;
+      --font-code: 'Fira Code', monospace;
+      --text-h1: 2rem;
+      --text-h4: 1.25rem;
+      --text-md: 1rem;
+      --text-sm: 0.875rem;
+      --text-xs: 0.75rem;
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+      --space-6: 1.5rem; --space-8: 2rem; --space-12: 3rem;
+      --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+      --transition-fast: 150ms ease-out;
+      --color-text-primary: #1a1a1a;
+      --color-text-secondary: #666666;
+      --color-text-tertiary: #888888;
+      --color-text-inverse: #ffffff;
+      --color-bg-primary: #ffffff;
+      --color-bg-secondary: #f5f5f5;
+      --color-surface: #ffffff;
+      --color-border: #e0e0e0;
+      --color-border-light: #eeeeee;
+      --color-accent: #0066ff;
+      --color-accent-hover: #0052cc;
+      --color-accent-light: #e6f0ff;
+      --color-error: #dc3545;
+      --color-error-light: #f8d7da;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.06);
+      --shadow-focus: 0 0 0 3px rgba(0, 102, 255, 0.3);
+    }
+    [data-theme="dark"] {
+      --color-text-primary: #ffffff;
+      --color-text-secondary: #b0b0b0;
+      --color-text-tertiary: #888888;
+      --color-text-inverse: #1a1a1a;
+      --color-bg-primary: #0d1117;
+      --color-bg-secondary: #161b22;
+      --color-surface: #161b22;
+      --color-border: #30363d;
+      --color-border-light: #21262d;
+      --color-accent: #4da6ff;
+      --color-accent-hover: #79c0ff;
+      --color-accent-light: #1c3a5e;
+      --color-error: #f85149;
+      --color-error-light: #3d1a1a;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.5);
+      --shadow-focus: 0 0 0 3px rgba(77, 166, 255, 0.3);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font-body); font-size: var(--text-md); line-height: 1.6;
+      color: var(--color-text-primary); background: var(--color-bg-secondary);
+      display: flex; flex-direction: column;
+    }
+    a { color: var(--color-accent); text-decoration: none; }
+    a:hover { color: var(--color-accent-hover); text-decoration: underline; }
+
+    /* Layout */
+    .login-page {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: var(--space-4); min-height: 100vh;
+    }
+    .login-container { width: 100%; max-width: 420px; }
+
+    /* Card */
+    .login-card {
+      background: var(--color-surface); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg); padding: var(--space-8); text-align: center;
+    }
+
+    /* Logo */
+    .login-logo {
+      display: flex; align-items: center; justify-content: center; gap: var(--space-3);
+      margin-bottom: var(--space-6);
+    }
+    .login-logo-icon {
+      width: 48px; height: 48px; background: var(--color-accent-light);
+      border-radius: var(--radius-md); display: flex; align-items: center;
+      justify-content: center; color: var(--color-accent);
+    }
+    .login-logo-text {
+      font-family: var(--font-heading); font-size: var(--text-h4); font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    /* Header */
+    .login-header { margin-bottom: var(--space-6); }
+    .login-title {
+      font-family: var(--font-heading); font-size: var(--text-h1); font-weight: 700;
+      color: var(--color-text-primary); margin-bottom: var(--space-2);
+    }
+    .login-subtitle { color: var(--color-text-secondary); font-size: var(--text-sm); }
+
+    /* Form */
+    .login-form { text-align: left; }
+    .form-group { margin-bottom: var(--space-4); }
+    .form-label {
+      display: block; margin-bottom: var(--space-2); font-size: var(--text-sm);
+      font-weight: 500; color: var(--color-text-primary);
+    }
+    .form-input {
+      width: 100%; padding: var(--space-3) var(--space-4);
+      font-family: var(--font-body); font-size: var(--text-md);
+      color: var(--color-text-primary); background: var(--color-bg-primary);
+      border: 1px solid var(--color-border); border-radius: var(--radius-md);
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    .form-input::placeholder { color: var(--color-text-tertiary); }
+    .form-input:hover { border-color: var(--color-text-tertiary); }
+    .form-input:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus); }
+    .form-input.error { border-color: var(--color-error); }
+    .form-input.error:focus { box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.3); }
+
+    /* Password Field */
+    .password-field { position: relative; }
+    .password-toggle {
+      position: absolute; right: var(--space-3); top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--color-text-tertiary);
+      padding: var(--space-1); display: flex; align-items: center; justify-content: center;
+    }
+    .password-toggle:hover { color: var(--color-text-primary); }
+    .password-field .form-input { padding-right: var(--space-10); }
+
+    /* Error Message */
+    .form-error {
+      display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2);
+      font-size: var(--text-sm); color: var(--color-error);
+    }
+    .form-error svg { flex-shrink: 0; }
+
+    /* Remember & Forgot */
+    .form-options {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: var(--space-6); flex-wrap: wrap; gap: var(--space-2);
+    }
+    .remember-me { display: flex; align-items: center; gap: var(--space-2); }
+    .remember-me input { width: 16px; height: 16px; accent-color: var(--color-accent); cursor: pointer; }
+    .remember-me label { font-size: var(--text-sm); color: var(--color-text-secondary); cursor: pointer; }
+    .forgot-link { font-size: var(--text-sm); }
+
+    /* Button */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+      width: 100%; padding: var(--space-3) var(--space-6);
+      font-family: var(--font-body); font-size: var(--text-md); font-weight: 500;
+      border-radius: var(--radius-md); border: none; cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .btn-primary {
+      background: var(--color-accent); color: var(--color-text-inverse);
+    }
+    .btn-primary:hover { background: var(--color-accent-hover); }
+    .btn-primary:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+    .btn-primary:disabled {
+      opacity: 0.6; cursor: not-allowed;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 18px; height: 18px; border: 2px solid transparent;
+      border-top-color: currentColor; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Divider */
+    .divider {
+      display: flex; align-items: center; gap: var(--space-4);
+      margin: var(--space-6) 0; color: var(--color-text-tertiary); font-size: var(--text-sm);
+    }
+    .divider::before, .divider::after {
+      content: ""; flex: 1; height: 1px; background: var(--color-border);
+    }
+
+    /* Social Login */
+    .social-buttons { display: flex; flex-direction: column; gap: var(--space-3); }
+    .btn-social {
+      display: flex; align-items: center; justify-content: center; gap: var(--space-3);
+      width: 100%; padding: var(--space-3) var(--space-4);
+      font-family: var(--font-body); font-size: var(--text-sm); font-weight: 500;
+      color: var(--color-text-primary); background: var(--color-bg-primary);
+      border: 1px solid var(--color-border); border-radius: var(--radius-md);
+      cursor: pointer; transition: all var(--transition-fast);
+    }
+    .btn-social:hover { background: var(--color-bg-secondary); border-color: var(--color-text-tertiary); }
+    .btn-social svg { width: 20px; height: 20px; }
+
+    /* Footer */
+    .login-footer {
+      margin-top: var(--space-6); padding-top: var(--space-6);
+      border-top: 1px solid var(--color-border-light); text-align: center;
+    }
+    .login-footer p { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+    /* Back Link */
+    .back-link {
+      display: inline-flex; align-items: center; gap: var(--space-2);
+      margin-top: var(--space-6); font-size: var(--text-sm); color: var(--color-text-secondary);
+    }
+    .back-link:hover { color: var(--color-accent); text-decoration: none; }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: fixed; top: var(--space-4); right: var(--space-4);
+      width: 40px; height: 40px; background: var(--color-surface);
+      border: 1px solid var(--color-border); border-radius: var(--radius-md);
+      cursor: pointer; color: var(--color-text-secondary);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-sm); transition: all var(--transition-fast);
+    }
+    .theme-toggle:hover { background: var(--color-bg-secondary); color: var(--color-text-primary); }
+    .icon-sun, .icon-moon { width: 20px; height: 20px; }
+    [data-theme="light"] .icon-moon { display: none; }
+    [data-theme="dark"] .icon-sun { display: none; }
+
+    /* Alert */
+    .alert {
+      display: flex; align-items: flex-start; gap: var(--space-3);
+      padding: var(--space-4); margin-bottom: var(--space-4);
+      background: var(--color-error-light); border-radius: var(--radius-md);
+      border-left: 4px solid var(--color-error);
+    }
+    .alert-icon { flex-shrink: 0; color: var(--color-error); }
+    .alert-content { flex: 1; }
+    .alert-title { font-weight: 600; font-size: var(--text-sm); color: var(--color-error); margin-bottom: var(--space-1); }
+    .alert-message { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" aria-label="Toggle theme" onclick="toggleTheme()">
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+    </svg>
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+    </svg>
+  </button>
+
+  <main class="login-page" role="main">
+    <div class="login-container">
+      <div class="login-card">
+        <!-- Logo -->
+        <div class="login-logo">
+          <div class="login-logo-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </div>
+          <span class="login-logo-text">HoaNguyen.dev</span>
+        </div>
+
+        <!-- Header -->
+        <header class="login-header">
+          <h1 class="login-title">Welcome back</h1>
+          <p class="login-subtitle">Sign in to access the admin dashboard</p>
+        </header>
+
+        <!-- Error Alert (hidden by default, shown on error) -->
+        <div class="alert" style="display: none;" id="error-alert" role="alert">
+          <div class="alert-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>
+            </svg>
+          </div>
+          <div class="alert-content">
+            <div class="alert-title">Authentication failed</div>
+            <div class="alert-message">Invalid email or password. Please try again.</div>
+          </div>
+        </div>
+
+        <!-- Login Form -->
+        <form class="login-form" action="#" method="POST" id="login-form">
+          <div class="form-group">
+            <label for="email" class="form-label">Email address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-input"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="password" class="form-label">Password</label>
+            <div class="password-field">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="form-input"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+              >
+              <button type="button" class="password-toggle" aria-label="Toggle password visibility" onclick="togglePassword()">
+                <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg id="eye-off-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-options">
+            <div class="remember-me">
+              <input type="checkbox" id="remember" name="remember">
+              <label for="remember">Remember me</label>
+            </div>
+            <a href="#" class="forgot-link">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="submit-btn">
+            <span id="btn-text">Sign in</span>
+            <span id="btn-spinner" class="spinner" style="display: none;"></span>
+          </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="divider">or continue with</div>
+
+        <!-- Social Login -->
+        <div class="social-buttons">
+          <button type="button" class="btn-social">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+            Continue with GitHub
+          </button>
+          <button type="button" class="btn-social">
+            <svg viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </button>
+        </div>
+
+        <!-- Footer -->
+        <footer class="login-footer">
+          <p>Don't have access? <a href="#">Request an invitation</a></p>
+        </footer>
+      </div>
+
+      <!-- Back to site -->
+      <a href="/" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to website
+      </a>
+    </div>
+  </main>
+
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    }
+
+    (function() {
+      const stored = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', stored || (prefersDark ? 'dark' : 'light'));
+    })();
+
+    function togglePassword() {
+      const input = document.getElementById('password');
+      const eyeIcon = document.getElementById('eye-icon');
+      const eyeOffIcon = document.getElementById('eye-off-icon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        eyeIcon.style.display = 'none';
+        eyeOffIcon.style.display = 'block';
+      } else {
+        input.type = 'password';
+        eyeIcon.style.display = 'block';
+        eyeOffIcon.style.display = 'none';
+      }
+    }
+
+    // Demo: Show loading state on submit
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const btnText = document.getElementById('btn-text');
+      const btnSpinner = document.getElementById('btn-spinner');
+      btn.disabled = true;
+      btnText.textContent = 'Signing in...';
+      btnSpinner.style.display = 'block';
+
+      // Simulate API call
+      setTimeout(() => {
+        btn.disabled = false;
+        btnText.textContent = 'Sign in';
+        btnSpinner.style.display = 'none';
+        // Show error for demo
+        document.getElementById('error-alert').style.display = 'flex';
+      }, 1500);
+    });
+  </script>
+</body>
+</html>

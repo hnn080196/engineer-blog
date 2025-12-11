@@ -137,3 +137,20 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# SolidStart / Vinxi
+.solid/
+.vinxi/
+.output/
+
+# Database
+db/*.db
+db/*.db-*
+
+# Uploads (keep directory but not files)
+public/uploads/*
+!public/uploads/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db

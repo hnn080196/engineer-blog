@@ -1,0 +1,52 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+.output
+.vinxi
+dist
+
+# Development
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Documentation
+*.md
+docs/
+
+# Test files
+*.test.*
+*.spec.*
+__tests__
+coverage
+
+# Data
+data/
+*.db
+*.sqlite
+
+# Logs
+logs
+*.log
+npm-debug.log*

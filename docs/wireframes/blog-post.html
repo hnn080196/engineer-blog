@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Building Type-Safe APIs with tRPC | Engineer Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Fira+Code:wght@400;500&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-heading: 'Crimson Pro', Georgia, serif;
+      --font-body: 'Lora', Georgia, serif;
+      --font-code: 'Fira Code', monospace;
+      --text-h1: clamp(2rem, 4vw, 2.75rem);
+      --text-h2: clamp(1.5rem, 3vw, 2rem);
+      --text-h3: clamp(1.25rem, 2.5vw, 1.5rem);
+      --text-h4: 1.25rem;
+      --text-lg: 1.125rem;
+      --text-md: 1rem;
+      --text-sm: 0.875rem;
+      --text-xs: 0.75rem;
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+      --space-6: 1.5rem; --space-8: 2rem; --space-12: 3rem; --space-16: 4rem;
+      --container-max: 1200px;
+      --content-width: 720px;
+      --header-height: 64px;
+      --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-full: 9999px;
+      --transition-fast: 150ms ease-out; --transition-normal: 250ms ease-out;
+      --color-text-primary: #1a1a1a; --color-text-secondary: #666666; --color-text-tertiary: #888888;
+      --color-text-inverse: #ffffff; --color-bg-primary: #ffffff; --color-bg-secondary: #f5f5f5;
+      --color-surface: #ffffff; --color-surface-hover: #f0f0f0;
+      --color-border: #e0e0e0; --color-border-light: #eeeeee;
+      --color-accent: #0066ff; --color-accent-hover: #0052cc; --color-accent-light: #e6f0ff;
+      --color-code-bg: #f8f8f8; --color-code-text: #1a1a1a;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.12);
+      --shadow-focus: 0 0 0 3px rgba(0, 102, 255, 0.3);
+    }
+    [data-theme="dark"] {
+      --color-text-primary: #ffffff; --color-text-secondary: #b0b0b0; --color-text-tertiary: #888888;
+      --color-text-inverse: #1a1a1a; --color-bg-primary: #0d1117; --color-bg-secondary: #161b22;
+      --color-surface: #161b22; --color-surface-hover: #21262d;
+      --color-border: #30363d; --color-border-light: #21262d;
+      --color-accent: #4da6ff; --color-accent-hover: #79c0ff; --color-accent-light: #1c3a5e;
+      --color-code-bg: #161b22; --color-code-text: #e6edf3;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3); --shadow-lg: 0 10px 25px rgba(0,0,0,0.5);
+      --shadow-focus: 0 0 0 3px rgba(77, 166, 255, 0.3);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body); font-size: var(--text-md); line-height: 1.7;
+      color: var(--color-text-primary); background: var(--color-bg-primary);
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4 { font-family: var(--font-heading); line-height: 1.3; font-weight: 600; }
+    h1 { font-size: var(--text-h1); font-weight: 700; }
+    h2 { font-size: var(--text-h2); margin-top: var(--space-12); margin-bottom: var(--space-4); }
+    h3 { font-size: var(--text-h3); margin-top: var(--space-8); margin-bottom: var(--space-3); }
+    a { color: var(--color-accent); text-decoration: none; }
+    a:hover { color: var(--color-accent-hover); text-decoration: underline; }
+    img { max-width: 100%; height: auto; display: block; }
+    p { margin-bottom: var(--space-4); }
+
+    .skip-link {
+      position: absolute; top: -100%; left: 50%; transform: translateX(-50%);
+      padding: var(--space-3) var(--space-6); background: var(--color-accent);
+      color: var(--color-text-inverse); border-radius: var(--radius-md); z-index: 1000;
+    }
+    .skip-link:focus { top: var(--space-4); color: var(--color-text-inverse); text-decoration: none; }
+    .container { width: 100%; max-width: var(--container-max); margin: 0 auto; padding: 0 var(--space-4); }
+    @media (min-width: 768px) { .container { padding: 0 var(--space-6); } }
+
+    /* Header */
+    .header {
+      position: sticky; top: 0; z-index: 100; height: var(--header-height);
+      background: var(--color-bg-primary); border-bottom: 1px solid var(--color-border-light);
+      backdrop-filter: blur(8px);
+    }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; height: 100%; }
+    .logo { font-family: var(--font-heading); font-size: var(--text-h4); font-weight: 700; color: var(--color-text-primary); text-decoration: none; }
+    .logo:hover { color: var(--color-accent); text-decoration: none; }
+    .nav { display: none; align-items: center; gap: var(--space-6); }
+    @media (min-width: 768px) { .nav { display: flex; } }
+    .nav-link {
+      font-size: var(--text-sm); font-weight: 500; color: var(--color-text-secondary);
+      padding: var(--space-2) 0; border-bottom: 2px solid transparent; text-decoration: none;
+    }
+    .nav-link:hover, .nav-link.active { color: var(--color-text-primary); border-bottom-color: var(--color-accent); text-decoration: none; }
+    .header-actions { display: flex; align-items: center; gap: var(--space-3); }
+    .theme-toggle {
+      display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+      background: none; border: 1px solid var(--color-border); border-radius: var(--radius-md);
+      cursor: pointer; color: var(--color-text-secondary);
+    }
+    .theme-toggle:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+    .icon-sun, .icon-moon { width: 20px; height: 20px; }
+    [data-theme="light"] .icon-moon { display: none; }
+    [data-theme="dark"] .icon-sun { display: none; }
+    .menu-toggle { display: flex; width: 40px; height: 40px; background: none; border: none; cursor: pointer; color: var(--color-text-primary); align-items: center; justify-content: center; }
+    @media (min-width: 768px) { .menu-toggle { display: none; } }
+
+    /* Article Layout */
+    .article-layout { display: grid; gap: var(--space-8); padding: var(--space-8) 0; }
+    @media (min-width: 1024px) {
+      .article-layout { grid-template-columns: 1fr 260px; gap: var(--space-12); }
+    }
+
+    /* Article Header */
+    .article-header { margin-bottom: var(--space-8); }
+    .breadcrumb {
+      display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm);
+      color: var(--color-text-tertiary); margin-bottom: var(--space-6);
+    }
+    .breadcrumb a { color: var(--color-text-secondary); }
+    .breadcrumb a:hover { color: var(--color-accent); }
+    .breadcrumb-sep { color: var(--color-text-tertiary); }
+    .article-category {
+      display: inline-block; padding: var(--space-1) var(--space-3); font-size: var(--text-xs);
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--color-accent); background: var(--color-accent-light);
+      border-radius: var(--radius-full); margin-bottom: var(--space-4);
+    }
+    .article-title { margin-bottom: var(--space-4); letter-spacing: -0.02em; }
+    .article-excerpt { font-size: var(--text-lg); color: var(--color-text-secondary); line-height: 1.6; margin-bottom: var(--space-6); }
+    .article-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); font-size: var(--text-sm); color: var(--color-text-tertiary); }
+    .author { display: flex; align-items: center; gap: var(--space-3); }
+    .author-avatar {
+      width: 40px; height: 40px; border-radius: 50%; background: var(--color-accent-light);
+      display: flex; align-items: center; justify-content: center; color: var(--color-accent);
+    }
+    .author-name { font-weight: 500; color: var(--color-text-primary); }
+    .meta-divider { color: var(--color-border); }
+
+    /* Featured Image */
+    .featured-image {
+      width: 100%; aspect-ratio: 2 / 1; background: linear-gradient(135deg, var(--color-accent-light), var(--color-bg-secondary));
+      border-radius: var(--radius-lg); margin-bottom: var(--space-8);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Article Content */
+    .article-content { max-width: var(--content-width); }
+    .article-content > * + * { margin-top: var(--space-4); }
+    .article-content h2 { padding-top: var(--space-4); border-top: 1px solid var(--color-border-light); }
+    .article-content ul, .article-content ol { padding-left: var(--space-6); margin-bottom: var(--space-4); }
+    .article-content li { margin-bottom: var(--space-2); }
+    .article-content blockquote {
+      border-left: 4px solid var(--color-accent); padding: var(--space-4) var(--space-6);
+      background: var(--color-bg-secondary); margin: var(--space-6) 0; font-style: italic;
+      color: var(--color-text-secondary); border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    }
+    .article-content blockquote p { margin-bottom: 0; }
+
+    /* Code Blocks */
+    .code-block { position: relative; margin: var(--space-6) 0; }
+    .code-lang {
+      position: absolute; top: 0; right: 0; padding: var(--space-1) var(--space-3);
+      font-family: var(--font-code); font-size: var(--text-xs); color: var(--color-text-tertiary);
+      background: var(--color-surface-hover); border-radius: 0 var(--radius-md) 0 var(--radius-sm);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .code-copy {
+      position: absolute; top: var(--space-2); right: var(--space-12); padding: var(--space-2);
+      background: var(--color-surface); border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm); cursor: pointer; opacity: 0; transition: opacity var(--transition-fast);
+      color: var(--color-text-secondary);
+    }
+    .code-block:hover .code-copy { opacity: 1; }
+    .code-copy:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+    pre {
+      font-family: var(--font-code); font-size: 0.875rem; line-height: 1.6;
+      padding: var(--space-6); background: var(--color-code-bg);
+      border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
+      overflow-x: auto; color: var(--color-code-text);
+    }
+    code:not(pre code) {
+      font-family: var(--font-code); font-size: 0.9em; padding: 0.15em 0.4em;
+      background: var(--color-code-bg); border-radius: var(--radius-sm); color: var(--color-accent);
+    }
+
+    /* Syntax Highlighting */
+    .token-keyword { color: #a626a4; }
+    .token-string { color: #50a14f; }
+    .token-function { color: #4078f2; }
+    .token-comment { color: #a0a1a7; font-style: italic; }
+    .token-number { color: #986801; }
+    .token-type { color: #c18401; }
+    [data-theme="dark"] .token-keyword { color: #ff79c6; }
+    [data-theme="dark"] .token-string { color: #f1fa8c; }
+    [data-theme="dark"] .token-function { color: #50fa7b; }
+    [data-theme="dark"] .token-comment { color: #6272a4; }
+    [data-theme="dark"] .token-number { color: #bd93f9; }
+    [data-theme="dark"] .token-type { color: #8be9fd; }
+
+    /* Callout */
+    .callout {
+      display: flex; gap: var(--space-3); padding: var(--space-4); margin: var(--space-6) 0;
+      background: var(--color-accent-light); border-radius: var(--radius-md);
+      border-left: 4px solid var(--color-accent);
+    }
+    .callout-icon { flex-shrink: 0; color: var(--color-accent); }
+    .callout-content { font-size: var(--text-sm); }
+    .callout-content p { margin-bottom: 0; }
+
+    /* Tags */
+    .article-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--color-border-light); }
+    .tag {
+      display: inline-flex; padding: var(--space-1) var(--space-3); font-family: var(--font-code);
+      font-size: var(--text-xs); color: var(--color-text-secondary); background: var(--color-bg-secondary);
+      border-radius: var(--radius-full); text-decoration: none;
+    }
+    .tag:hover { background: var(--color-accent-light); color: var(--color-accent); text-decoration: none; }
+
+    /* Share */
+    .share-section { margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--color-border-light); }
+    .share-title { font-size: var(--text-sm); font-weight: 600; color: var(--color-text-secondary); margin-bottom: var(--space-3); }
+    .share-buttons { display: flex; gap: var(--space-2); }
+    .share-btn {
+      display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+      background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+      color: var(--color-text-secondary); cursor: pointer; transition: all var(--transition-fast);
+    }
+    .share-btn:hover { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-text-inverse); }
+
+    /* Sidebar */
+    .sidebar { display: none; }
+    @media (min-width: 1024px) { .sidebar { display: block; position: sticky; top: calc(var(--header-height) + var(--space-8)); height: fit-content; } }
+    .toc {
+      background: var(--color-surface); border: 1px solid var(--color-border-light);
+      border-radius: var(--radius-lg); padding: var(--space-6);
+    }
+    .toc-title { font-size: var(--text-sm); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-primary); margin-bottom: var(--space-4); }
+    .toc-list { list-style: none; display: flex; flex-direction: column; gap: var(--space-2); }
+    .toc-item { font-size: var(--text-sm); }
+    .toc-link {
+      display: block; padding: var(--space-2) 0; color: var(--color-text-secondary);
+      border-left: 2px solid transparent; padding-left: var(--space-3); text-decoration: none;
+      transition: all var(--transition-fast);
+    }
+    .toc-link:hover, .toc-link.active { color: var(--color-accent); border-left-color: var(--color-accent); text-decoration: none; }
+    .toc-link--nested { padding-left: var(--space-6); font-size: var(--text-xs); }
+
+    /* Author Card */
+    .author-card {
+      background: var(--color-surface); border: 1px solid var(--color-border-light);
+      border-radius: var(--radius-lg); padding: var(--space-6); margin-top: var(--space-6); text-align: center;
+    }
+    .author-card-avatar {
+      width: 64px; height: 64px; border-radius: 50%; background: var(--color-accent-light);
+      display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-3);
+      color: var(--color-accent);
+    }
+    .author-card-name { font-family: var(--font-heading); font-weight: 600; margin-bottom: var(--space-1); }
+    .author-card-bio { font-size: var(--text-sm); color: var(--color-text-secondary); margin-bottom: var(--space-4); }
+    .author-card-link { font-size: var(--text-sm); font-weight: 500; }
+
+    /* Related Posts */
+    .related-section { padding: var(--space-12) 0; margin-top: var(--space-8); border-top: 1px solid var(--color-border-light); }
+    .related-title { font-size: var(--text-h3); margin-bottom: var(--space-6); }
+    .related-grid { display: grid; gap: var(--space-6); }
+    @media (min-width: 640px) { .related-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .related-grid { grid-template-columns: repeat(3, 1fr); } }
+    .related-card {
+      background: var(--color-surface); border: 1px solid var(--color-border-light);
+      border-radius: var(--radius-lg); padding: var(--space-6);
+      transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+    }
+    .related-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    .related-card-category {
+      font-size: var(--text-xs); font-weight: 500; text-transform: uppercase;
+      color: var(--color-accent); margin-bottom: var(--space-2);
+    }
+    .related-card-title { font-family: var(--font-heading); font-size: var(--text-h4); font-weight: 600; margin-bottom: var(--space-2); line-height: 1.35; }
+    .related-card-title a { color: var(--color-text-primary); text-decoration: none; }
+    .related-card-title a:hover { color: var(--color-accent); }
+    .related-card-meta { font-size: var(--text-sm); color: var(--color-text-tertiary); }
+
+    /* Footer */
+    .footer { border-top: 1px solid var(--color-border-light); padding: var(--space-8) 0; margin-top: var(--space-16); text-align: center; }
+    .footer-copyright { font-size: var(--text-sm); color: var(--color-text-tertiary); }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header class="header" role="banner">
+    <div class="container">
+      <div class="header-inner">
+        <a href="/" class="logo">HoaNguyen.dev</a>
+        <nav class="nav" role="navigation" aria-label="Main navigation">
+          <a href="/" class="nav-link">Home</a>
+          <a href="/blog" class="nav-link active">Blog</a>
+          <a href="/projects" class="nav-link">Projects</a>
+          <a href="/about" class="nav-link">About</a>
+        </nav>
+        <div class="header-actions">
+          <button class="theme-toggle" aria-label="Toggle theme" onclick="toggleTheme()">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          </button>
+          <button class="menu-toggle" aria-label="Toggle menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" role="main">
+    <div class="container">
+      <div class="article-layout">
+        <article>
+          <!-- Article Header -->
+          <header class="article-header">
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+              <a href="/">Home</a>
+              <span class="breadcrumb-sep">/</span>
+              <a href="/blog">Blog</a>
+              <span class="breadcrumb-sep">/</span>
+              <span aria-current="page">TypeScript</span>
+            </nav>
+            <span class="article-category">TypeScript</span>
+            <h1 class="article-title">Building Type-Safe APIs with tRPC and Zod</h1>
+            <p class="article-excerpt">Learn how to create end-to-end type safety in your full-stack TypeScript applications using tRPC and Zod validation schemas.</p>
+            <div class="article-meta">
+              <div class="author">
+                <div class="author-avatar">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <div>
+                  <div class="author-name">Hoa Nguyen</div>
+                </div>
+              </div>
+              <span class="meta-divider">|</span>
+              <time datetime="2025-12-08">December 8, 2025</time>
+              <span class="meta-divider">|</span>
+              <span>8 min read</span>
+            </div>
+          </header>
+
+          <!-- Featured Image -->
+          <div class="featured-image" aria-hidden="true">
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="color: var(--color-accent); opacity: 0.3;">
+              <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </div>
+
+          <!-- Article Content -->
+          <div class="article-content">
+            <p>Type safety is one of the most powerful features of TypeScript, yet maintaining it across the full stack has traditionally been challenging. With <strong>tRPC</strong> and <strong>Zod</strong>, we can finally achieve true end-to-end type safety without code generation or schema duplication.</p>
+
+            <h2 id="introduction">Introduction</h2>
+            <p>In this guide, we'll explore how to build a type-safe API layer that provides automatic type inference from your backend to your frontend. No more <code>any</code> types, no more runtime surprises.</p>
+
+            <div class="callout">
+              <div class="callout-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              </div>
+              <div class="callout-content">
+                <p><strong>Prerequisites:</strong> This guide assumes familiarity with TypeScript, React, and basic API concepts.</p>
+              </div>
+            </div>
+
+            <h2 id="what-is-trpc">What is tRPC?</h2>
+            <p>tRPC (TypeScript Remote Procedure Call) is a framework that enables you to build fully type-safe APIs without schemas or code generation. It leverages TypeScript's type inference to provide:</p>
+            <ul>
+              <li>Automatic type inference for inputs and outputs</li>
+              <li>No code generation required</li>
+              <li>First-class support for React Query</li>
+              <li>Built-in support for subscriptions</li>
+            </ul>
+
+            <h2 id="setting-up">Setting Up the Project</h2>
+            <p>Let's start by installing the necessary dependencies:</p>
+
+            <div class="code-block">
+              <span class="code-lang">bash</span>
+              <button class="code-copy" aria-label="Copy code">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              </button>
+              <pre>npm install @trpc/server @trpc/client @trpc/react-query zod</pre>
+            </div>
+
+            <h3 id="creating-router">Creating the tRPC Router</h3>
+            <p>The router is where you define your API procedures. Each procedure can be a query (for fetching data) or a mutation (for modifying data):</p>
+
+            <div class="code-block">
+              <span class="code-lang">typescript</span>
+              <button class="code-copy" aria-label="Copy code">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              </button>
+              <pre><span class="token-keyword">import</span> { initTRPC } <span class="token-keyword">from</span> <span class="token-string">'@trpc/server'</span>;
+<span class="token-keyword">import</span> { z } <span class="token-keyword">from</span> <span class="token-string">'zod'</span>;
+
+<span class="token-keyword">const</span> t = <span class="token-function">initTRPC</span>.<span class="token-function">create</span>();
+
+<span class="token-keyword">export const</span> appRouter = t.router({
+  <span class="token-comment">// Query procedure</span>
+  getUser: t.procedure
+    .<span class="token-function">input</span>(z.<span class="token-function">object</span>({ id: z.<span class="token-function">string</span>() }))
+    .<span class="token-function">query</span>(<span class="token-keyword">async</span> ({ input }) => {
+      <span class="token-keyword">return</span> <span class="token-keyword">await</span> db.user.<span class="token-function">findUnique</span>({
+        where: { id: input.id }
+      });
+    }),
+
+  <span class="token-comment">// Mutation procedure</span>
+  createUser: t.procedure
+    .<span class="token-function">input</span>(z.<span class="token-function">object</span>({
+      name: z.<span class="token-function">string</span>().<span class="token-function">min</span>(<span class="token-number">2</span>),
+      email: z.<span class="token-function">string</span>().<span class="token-function">email</span>(),
+    }))
+    .<span class="token-function">mutation</span>(<span class="token-keyword">async</span> ({ input }) => {
+      <span class="token-keyword">return</span> <span class="token-keyword">await</span> db.user.<span class="token-function">create</span>({
+        data: input
+      });
+    }),
+});
+
+<span class="token-keyword">export type</span> <span class="token-type">AppRouter</span> = <span class="token-keyword">typeof</span> appRouter;</pre>
+            </div>
+
+            <h2 id="zod-validation">Zod Validation Schemas</h2>
+            <p>Zod provides runtime validation while maintaining TypeScript types. Here's how to create reusable schemas:</p>
+
+            <div class="code-block">
+              <span class="code-lang">typescript</span>
+              <button class="code-copy" aria-label="Copy code">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              </button>
+              <pre><span class="token-keyword">import</span> { z } <span class="token-keyword">from</span> <span class="token-string">'zod'</span>;
+
+<span class="token-keyword">export const</span> UserSchema = z.<span class="token-function">object</span>({
+  id: z.<span class="token-function">string</span>().<span class="token-function">uuid</span>(),
+  name: z.<span class="token-function">string</span>().<span class="token-function">min</span>(<span class="token-number">2</span>).<span class="token-function">max</span>(<span class="token-number">100</span>),
+  email: z.<span class="token-function">string</span>().<span class="token-function">email</span>(),
+  createdAt: z.<span class="token-function">date</span>(),
+});
+
+<span class="token-comment">// Infer TypeScript type from schema</span>
+<span class="token-keyword">export type</span> <span class="token-type">User</span> = z.<span class="token-function">infer</span>&lt;<span class="token-keyword">typeof</span> UserSchema&gt;;</pre>
+            </div>
+
+            <blockquote>
+              <p>"The best code is code that doesn't exist. With tRPC, you write your types once and they flow throughout your entire application."</p>
+            </blockquote>
+
+            <h2 id="client-usage">Using the Client</h2>
+            <p>On the frontend, you get full autocompletion and type checking:</p>
+
+            <div class="code-block">
+              <span class="code-lang">typescript</span>
+              <button class="code-copy" aria-label="Copy code">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              </button>
+              <pre><span class="token-keyword">import</span> { trpc } <span class="token-keyword">from</span> <span class="token-string">'./utils/trpc'</span>;
+
+<span class="token-keyword">function</span> <span class="token-function">UserProfile</span>({ userId }: { userId: <span class="token-type">string</span> }) {
+  <span class="token-comment">// Full type inference!</span>
+  <span class="token-keyword">const</span> { data, isLoading } = trpc.getUser.<span class="token-function">useQuery</span>({
+    id: userId
+  });
+
+  <span class="token-keyword">if</span> (isLoading) <span class="token-keyword">return</span> &lt;Spinner /&gt;;
+
+  <span class="token-comment">// data is fully typed as User | undefined</span>
+  <span class="token-keyword">return</span> &lt;div&gt;{data?.name}&lt;/div&gt;;
+}</pre>
+            </div>
+
+            <h2 id="conclusion">Conclusion</h2>
+            <p>tRPC and Zod together provide an excellent developer experience for building type-safe applications. The combination eliminates entire categories of bugs while improving code maintainability.</p>
+
+            <p>Key takeaways:</p>
+            <ul>
+              <li>No code generation means faster development cycles</li>
+              <li>Runtime validation catches errors early</li>
+              <li>Full IDE support with autocompletion</li>
+              <li>Seamless integration with React Query</li>
+            </ul>
+
+            <!-- Tags -->
+            <div class="article-tags">
+              <a href="#" class="tag">typescript</a>
+              <a href="#" class="tag">trpc</a>
+              <a href="#" class="tag">zod</a>
+              <a href="#" class="tag">api</a>
+              <a href="#" class="tag">react</a>
+            </div>
+
+            <!-- Share -->
+            <div class="share-section">
+              <div class="share-title">Share this article</div>
+              <div class="share-buttons">
+                <button class="share-btn" aria-label="Share on Twitter">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </button>
+                <button class="share-btn" aria-label="Share on LinkedIn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                </button>
+                <button class="share-btn" aria-label="Copy link">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" aria-label="Article sidebar">
+          <nav class="toc" aria-label="Table of contents">
+            <h2 class="toc-title">On this page</h2>
+            <ul class="toc-list">
+              <li class="toc-item"><a href="#introduction" class="toc-link active">Introduction</a></li>
+              <li class="toc-item"><a href="#what-is-trpc" class="toc-link">What is tRPC?</a></li>
+              <li class="toc-item"><a href="#setting-up" class="toc-link">Setting Up</a></li>
+              <li class="toc-item"><a href="#creating-router" class="toc-link toc-link--nested">Creating the Router</a></li>
+              <li class="toc-item"><a href="#zod-validation" class="toc-link">Zod Validation</a></li>
+              <li class="toc-item"><a href="#client-usage" class="toc-link">Client Usage</a></li>
+              <li class="toc-item"><a href="#conclusion" class="toc-link">Conclusion</a></li>
+            </ul>
+          </nav>
+
+          <div class="author-card">
+            <div class="author-card-avatar">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="author-card-name">Hoa Nguyen</div>
+            <p class="author-card-bio">Software engineer writing about web development and system design.</p>
+            <a href="/about" class="author-card-link">View profile</a>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Related Posts -->
+      <section class="related-section" aria-labelledby="related-heading">
+        <h2 id="related-heading" class="related-title">Related Articles</h2>
+        <div class="related-grid">
+          <article class="related-card">
+            <div class="related-card-category">TypeScript</div>
+            <h3 class="related-card-title"><a href="#">Advanced TypeScript Patterns for React</a></h3>
+            <div class="related-card-meta">Dec 1, 2025 &middot; 10 min read</div>
+          </article>
+          <article class="related-card">
+            <div class="related-card-category">API Design</div>
+            <h3 class="related-card-title"><a href="#">REST vs GraphQL vs tRPC: A Comparison</a></h3>
+            <div class="related-card-meta">Nov 25, 2025 &middot; 12 min read</div>
+          </article>
+          <article class="related-card">
+            <div class="related-card-category">React</div>
+            <h3 class="related-card-title"><a href="#">React Query Best Practices</a></h3>
+            <div class="related-card-meta">Nov 18, 2025 &middot; 8 min read</div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <p class="footer-copyright">&copy; 2025 Hoa Nguyen. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    }
+    (function() {
+      const stored = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', stored || (prefersDark ? 'dark' : 'light'));
+    })();
+  </script>
+</body>
+</html>

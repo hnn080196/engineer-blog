@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Post | Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Fira+Code:wght@400;500&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-heading: 'Crimson Pro', Georgia, serif;
+      --font-body: 'Lora', Georgia, serif;
+      --font-code: 'Fira Code', monospace;
+      --text-h3: 1.25rem; --text-h4: 1.125rem;
+      --text-lg: 1.125rem; --text-md: 1rem; --text-sm: 0.875rem; --text-xs: 0.75rem;
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+      --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem;
+      --header-height: 56px; --sidebar-width: 320px;
+      --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-full: 9999px;
+      --transition-fast: 150ms ease-out;
+      --color-text-primary: #1a1a1a; --color-text-secondary: #666666; --color-text-tertiary: #888888;
+      --color-text-inverse: #ffffff; --color-bg-primary: #ffffff; --color-bg-secondary: #f5f5f5;
+      --color-bg-tertiary: #fafafa; --color-surface: #ffffff; --color-surface-hover: #f0f0f0;
+      --color-border: #e0e0e0; --color-border-light: #eeeeee;
+      --color-accent: #0066ff; --color-accent-hover: #0052cc; --color-accent-light: #e6f0ff;
+      --color-success: #10b981; --color-success-light: #d1fae5;
+      --color-warning: #f59e0b; --color-warning-light: #fef3c7;
+      --color-error: #ef4444;
+      --color-editor-bg: #fafafa;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08); --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+      --shadow-focus: 0 0 0 3px rgba(0,102,255,0.3);
+    }
+    [data-theme="dark"] {
+      --color-text-primary: #ffffff; --color-text-secondary: #b0b0b0; --color-text-tertiary: #888888;
+      --color-text-inverse: #1a1a1a; --color-bg-primary: #0d1117; --color-bg-secondary: #161b22;
+      --color-bg-tertiary: #1c2128; --color-surface: #161b22; --color-surface-hover: #21262d;
+      --color-border: #30363d; --color-border-light: #21262d;
+      --color-accent: #4da6ff; --color-accent-hover: #79c0ff; --color-accent-light: #1c3a5e;
+      --color-success: #3fb950; --color-success-light: #1a3d24;
+      --color-warning: #d29922; --color-warning-light: #3d3219;
+      --color-error: #f85149;
+      --color-editor-bg: #0d1117;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3); --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+      --shadow-focus: 0 0 0 3px rgba(77,166,255,0.3);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font-body); font-size: var(--text-md); line-height: 1.5;
+      color: var(--color-text-primary); background: var(--color-bg-secondary);
+    }
+    a { color: var(--color-accent); text-decoration: none; }
+    a:hover { color: var(--color-accent-hover); }
+
+    /* Layout */
+    .editor-layout { display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* Header */
+    .editor-header {
+      height: var(--header-height); background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border-light);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 var(--space-4); position: sticky; top: 0; z-index: 50;
+    }
+    .header-left { display: flex; align-items: center; gap: var(--space-4); }
+    .back-btn {
+      display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;
+      background: none; border: 1px solid var(--color-border); border-radius: var(--radius-md);
+      cursor: pointer; color: var(--color-text-secondary);
+    }
+    .back-btn:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+    .back-btn svg { width: 18px; height: 18px; }
+    .post-status {
+      display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm);
+      color: var(--color-text-tertiary);
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-warning); }
+    .status-dot.saved { background: var(--color-success); }
+    .header-center { display: flex; align-items: center; gap: var(--space-2); }
+    .view-toggle {
+      display: flex; background: var(--color-bg-secondary); border-radius: var(--radius-md);
+      padding: var(--space-1); border: 1px solid var(--color-border-light);
+    }
+    .view-btn {
+      display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+      background: none; border: none; border-radius: var(--radius-sm); cursor: pointer;
+      color: var(--color-text-tertiary); transition: all var(--transition-fast);
+    }
+    .view-btn:hover { color: var(--color-text-primary); }
+    .view-btn.active { background: var(--color-surface); color: var(--color-accent); box-shadow: var(--shadow-sm); }
+    .view-btn svg { width: 18px; height: 18px; }
+    .header-right { display: flex; align-items: center; gap: var(--space-3); }
+    .btn {
+      display: inline-flex; align-items: center; gap: var(--space-2);
+      padding: var(--space-2) var(--space-4); font-size: var(--text-sm); font-weight: 500;
+      border-radius: var(--radius-md); border: none; cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .btn-ghost { background: none; color: var(--color-text-secondary); }
+    .btn-ghost:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+    .btn-secondary { background: var(--color-surface); color: var(--color-text-primary); border: 1px solid var(--color-border); }
+    .btn-secondary:hover { background: var(--color-surface-hover); }
+    .btn-primary { background: var(--color-accent); color: var(--color-text-inverse); }
+    .btn-primary:hover { background: var(--color-accent-hover); }
+    .btn svg { width: 16px; height: 16px; }
+    .header-btn {
+      display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;
+      background: none; border: 1px solid var(--color-border); border-radius: var(--radius-md);
+      cursor: pointer; color: var(--color-text-secondary);
+    }
+    .header-btn:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+    .icon-sun, .icon-moon { width: 18px; height: 18px; }
+    [data-theme="light"] .icon-moon { display: none; }
+    [data-theme="dark"] .icon-sun { display: none; }
+
+    /* Main */
+    .editor-main { flex: 1; display: flex; overflow: hidden; }
+
+    /* Editor Area */
+    .editor-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Title Input */
+    .title-section { padding: var(--space-6) var(--space-8); background: var(--color-surface); }
+    .title-input {
+      width: 100%; font-family: var(--font-heading); font-size: 2rem; font-weight: 700;
+      color: var(--color-text-primary); background: none; border: none; outline: none;
+      line-height: 1.3;
+    }
+    .title-input::placeholder { color: var(--color-text-tertiary); }
+    .slug-row {
+      display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3);
+      font-size: var(--text-sm); color: var(--color-text-tertiary);
+    }
+    .slug-input {
+      font-family: var(--font-code); font-size: var(--text-sm);
+      color: var(--color-text-secondary); background: none; border: none; outline: none;
+      padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm);
+    }
+    .slug-input:focus { background: var(--color-bg-secondary); }
+
+    /* Toolbar */
+    .editor-toolbar {
+      display: flex; align-items: center; gap: var(--space-1); padding: var(--space-3) var(--space-8);
+      background: var(--color-surface); border-bottom: 1px solid var(--color-border-light);
+      flex-wrap: wrap;
+    }
+    .toolbar-group { display: flex; align-items: center; gap: var(--space-1); }
+    .toolbar-divider { width: 1px; height: 24px; background: var(--color-border-light); margin: 0 var(--space-2); }
+    .toolbar-btn {
+      display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+      background: none; border: none; border-radius: var(--radius-sm); cursor: pointer;
+      color: var(--color-text-secondary); transition: all var(--transition-fast);
+    }
+    .toolbar-btn:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+    .toolbar-btn.active { background: var(--color-accent-light); color: var(--color-accent); }
+    .toolbar-btn svg { width: 18px; height: 18px; }
+    .toolbar-select {
+      padding: var(--space-1) var(--space-3); font-size: var(--text-sm);
+      color: var(--color-text-secondary); background: var(--color-surface);
+      border: 1px solid var(--color-border-light); border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+    .toolbar-select:hover { border-color: var(--color-border); }
+
+    /* Content Editor */
+    .content-editor {
+      flex: 1; overflow-y: auto; padding: var(--space-6) var(--space-8);
+      background: var(--color-editor-bg);
+    }
+    .editor-content {
+      max-width: 720px; margin: 0 auto; min-height: 400px;
+      font-family: var(--font-body); font-size: var(--text-md); line-height: 1.8;
+      color: var(--color-text-primary); outline: none;
+    }
+    .editor-content p { margin-bottom: var(--space-4); }
+    .editor-content h2 {
+      font-family: var(--font-heading); font-size: 1.5rem; font-weight: 600;
+      margin-top: var(--space-8); margin-bottom: var(--space-4);
+    }
+    .editor-content h3 {
+      font-family: var(--font-heading); font-size: 1.25rem; font-weight: 600;
+      margin-top: var(--space-6); margin-bottom: var(--space-3);
+    }
+    .editor-content ul, .editor-content ol { padding-left: var(--space-6); margin-bottom: var(--space-4); }
+    .editor-content li { margin-bottom: var(--space-2); }
+    .editor-content blockquote {
+      border-left: 4px solid var(--color-accent); padding: var(--space-4) var(--space-6);
+      background: var(--color-surface); margin: var(--space-6) 0;
+      font-style: italic; color: var(--color-text-secondary);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    }
+    .editor-content pre {
+      font-family: var(--font-code); font-size: 0.875rem; line-height: 1.6;
+      padding: var(--space-4); background: var(--color-surface);
+      border: 1px solid var(--color-border-light); border-radius: var(--radius-md);
+      overflow-x: auto; margin: var(--space-6) 0;
+    }
+    .editor-content code:not(pre code) {
+      font-family: var(--font-code); font-size: 0.9em; padding: 0.15em 0.4em;
+      background: var(--color-surface); border-radius: var(--radius-sm);
+      color: var(--color-accent);
+    }
+    .editor-content a { color: var(--color-accent); text-decoration: underline; }
+    .editor-content img {
+      max-width: 100%; height: auto; border-radius: var(--radius-md);
+      margin: var(--space-6) 0;
+    }
+    .editor-placeholder {
+      color: var(--color-text-tertiary); font-style: italic;
+    }
+
+    /* Sidebar */
+    .editor-sidebar {
+      width: var(--sidebar-width); background: var(--color-surface);
+      border-left: 1px solid var(--color-border-light);
+      overflow-y: auto; display: none;
+    }
+    @media (min-width: 1024px) { .editor-sidebar { display: block; } }
+    .sidebar-section { border-bottom: 1px solid var(--color-border-light); }
+    .sidebar-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--space-4) var(--space-5); cursor: pointer;
+    }
+    .sidebar-title { font-size: var(--text-sm); font-weight: 600; color: var(--color-text-primary); }
+    .sidebar-toggle { color: var(--color-text-tertiary); transition: transform var(--transition-fast); }
+    .sidebar-toggle.open { transform: rotate(180deg); }
+    .sidebar-body { padding: 0 var(--space-5) var(--space-5); }
+
+    /* Form Elements */
+    .form-group { margin-bottom: var(--space-4); }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-label {
+      display: block; font-size: var(--text-xs); font-weight: 500;
+      color: var(--color-text-secondary); margin-bottom: var(--space-2);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: var(--space-2) var(--space-3);
+      font-family: var(--font-body); font-size: var(--text-sm);
+      color: var(--color-text-primary); background: var(--color-bg-primary);
+      border: 1px solid var(--color-border); border-radius: var(--radius-md);
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus);
+    }
+    .form-textarea { min-height: 80px; resize: vertical; }
+    .form-hint { font-size: var(--text-xs); color: var(--color-text-tertiary); margin-top: var(--space-1); }
+
+    /* Tags Input */
+    .tags-input { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-2); background: var(--color-bg-primary); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+    .tag {
+      display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2);
+      font-size: var(--text-xs); font-weight: 500; background: var(--color-accent-light);
+      color: var(--color-accent); border-radius: var(--radius-full);
+    }
+    .tag-remove { cursor: pointer; opacity: 0.7; }
+    .tag-remove:hover { opacity: 1; }
+    .tags-input input {
+      flex: 1; min-width: 100px; border: none; outline: none; background: none;
+      font-size: var(--text-sm); color: var(--color-text-primary);
+    }
+
+    /* Featured Image */
+    .featured-image-upload {
+      aspect-ratio: 16 / 9; background: var(--color-bg-secondary);
+      border: 2px dashed var(--color-border); border-radius: var(--radius-md);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: var(--space-2); cursor: pointer; transition: all var(--transition-fast);
+    }
+    .featured-image-upload:hover { border-color: var(--color-accent); background: var(--color-accent-light); }
+    .featured-image-upload svg { width: 32px; height: 32px; color: var(--color-text-tertiary); }
+    .featured-image-upload span { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+    /* Switch */
+    .switch-row { display: flex; align-items: center; justify-content: space-between; }
+    .switch-label { font-size: var(--text-sm); color: var(--color-text-primary); }
+    .switch {
+      position: relative; width: 44px; height: 24px; background: var(--color-border);
+      border-radius: var(--radius-full); cursor: pointer; transition: background var(--transition-fast);
+    }
+    .switch.active { background: var(--color-accent); }
+    .switch::after {
+      content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+      background: white; border-radius: 50%; transition: transform var(--transition-fast);
+    }
+    .switch.active::after { transform: translateX(20px); }
+
+    /* Schedule */
+    .schedule-row { display: flex; gap: var(--space-2); }
+    .schedule-row .form-input { flex: 1; }
+
+    /* Word Count */
+    .word-count {
+      display: flex; justify-content: space-between; padding: var(--space-3) var(--space-8);
+      background: var(--color-surface); border-top: 1px solid var(--color-border-light);
+      font-size: var(--text-xs); color: var(--color-text-tertiary);
+    }
+
+    /* Mobile Sidebar Toggle */
+    .sidebar-toggle-mobile {
+      display: none; position: fixed; bottom: var(--space-4); right: var(--space-4);
+      width: 48px; height: 48px; background: var(--color-accent); color: white;
+      border: none; border-radius: 50%; cursor: pointer; box-shadow: var(--shadow-md);
+      align-items: center; justify-content: center; z-index: 40;
+    }
+    @media (max-width: 1023px) { .sidebar-toggle-mobile { display: flex; } }
+    .sidebar-toggle-mobile svg { width: 24px; height: 24px; }
+
+    /* Mobile Sidebar */
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 45;
+    }
+    .sidebar-overlay.open { display: block; }
+    @media (max-width: 1023px) {
+      .editor-sidebar.open {
+        display: block; position: fixed; right: 0; top: var(--header-height);
+        bottom: 0; z-index: 50;
+      }
+    }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  </style>
+</head>
+<body>
+  <div class="editor-layout">
+    <!-- Header -->
+    <header class="editor-header">
+      <div class="header-left">
+        <a href="/admin/posts" class="back-btn" aria-label="Back to posts">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </a>
+        <div class="post-status">
+          <span class="status-dot saved"></span>
+          <span>Saved</span>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="view-toggle" role="group" aria-label="Editor view mode">
+          <button class="view-btn active" aria-label="Editor only" title="Editor">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="view-btn" aria-label="Split view" title="Split">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+          </button>
+          <button class="view-btn" aria-label="Preview only" title="Preview">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button class="btn btn-ghost">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Preview
+        </button>
+        <button class="btn btn-secondary">Save Draft</button>
+        <button class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          Publish
+        </button>
+        <button class="header-btn" aria-label="Toggle theme" onclick="toggleTheme()">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="editor-main">
+      <!-- Editor Area -->
+      <div class="editor-area">
+        <!-- Title -->
+        <div class="title-section">
+          <input type="text" class="title-input" placeholder="Post title..." value="Building Type-Safe APIs with tRPC and Zod">
+          <div class="slug-row">
+            <span>hoanguyen.dev/blog/</span>
+            <input type="text" class="slug-input" value="building-type-safe-apis-trpc-zod">
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="editor-toolbar">
+          <div class="toolbar-group">
+            <select class="toolbar-select" aria-label="Text style">
+              <option>Paragraph</option>
+              <option>Heading 2</option>
+              <option>Heading 3</option>
+              <option>Heading 4</option>
+            </select>
+          </div>
+
+          <div class="toolbar-divider"></div>
+
+          <div class="toolbar-group">
+            <button class="toolbar-btn" aria-label="Bold" title="Bold (Ctrl+B)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z"/><path d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"/></svg>
+            </button>
+            <button class="toolbar-btn" aria-label="Italic" title="Italic (Ctrl+I)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+            </button>
+            <button class="toolbar-btn" aria-label="Strikethrough" title="Strikethrough">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.3 4.9c-2.3-.6-4.4-1-6.2-.9-2.7 0-5.3.7-5.3 3.6 0 1.5 1.8 3.3 3.6 3.9h.2"/><path d="M6.7 19.1c2.3.6 4.4 1 6.2.9 2.7 0 5.3-.7 5.3-3.6 0-1.5-1.8-3.3-3.6-3.9h-.2"/><line x1="3" y1="12" x2="22" y2="12"/></svg>
+            </button>
+            <button class="toolbar-btn active" aria-label="Code" title="Inline code">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </button>
+          </div>
+
+          <div class="toolbar-divider"></div>
+
+          <div class="toolbar-group">
+            <button class="toolbar-btn" aria-label="Bullet list" title="Bullet list">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>
+            </button>
+            <button class="toolbar-btn" aria-label="Numbered list" title="Numbered list">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><text x="3" y="7" font-size="6" fill="currentColor">1</text><text x="3" y="13" font-size="6" fill="currentColor">2</text><text x="3" y="19" font-size="6" fill="currentColor">3</text></svg>
+            </button>
+            <button class="toolbar-btn" aria-label="Blockquote" title="Blockquote">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 17h3l2-4V7H5v6h3M14 17h3l2-4V7h-6v6h3"/></svg>
+            </button>
+          </div>
+
+          <div class="toolbar-divider"></div>
+
+          <div class="toolbar-group">
+            <button class="toolbar-btn" aria-label="Link" title="Insert link (Ctrl+K)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            </button>
+            <button class="toolbar-btn" aria-label="Image" title="Insert image">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            </button>
+            <button class="toolbar-btn" aria-label="Code block" title="Code block">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 10l4 4-4 4"/><line x1="16" y1="14" x2="16" y2="18"/></svg>
+            </button>
+          </div>
+
+          <div class="toolbar-divider"></div>
+
+          <div class="toolbar-group">
+            <button class="toolbar-btn" aria-label="Undo" title="Undo (Ctrl+Z)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+            </button>
+            <button class="toolbar-btn" aria-label="Redo" title="Redo (Ctrl+Shift+Z)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Content Editor -->
+        <div class="content-editor">
+          <div class="editor-content" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Post content">
+            <p>Type safety is one of the most powerful features of TypeScript, yet maintaining it across the full stack has traditionally been challenging. With <strong>tRPC</strong> and <strong>Zod</strong>, we can finally achieve true end-to-end type safety without code generation or schema duplication.</p>
+
+            <h2>Introduction</h2>
+            <p>In this guide, we'll explore how to build a type-safe API layer that provides automatic type inference from your backend to your frontend. No more <code>any</code> types, no more runtime surprises.</p>
+
+            <h2>What is tRPC?</h2>
+            <p>tRPC (TypeScript Remote Procedure Call) is a framework that enables you to build fully type-safe APIs without schemas or code generation. It leverages TypeScript's type inference to provide:</p>
+            <ul>
+              <li>Automatic type inference for inputs and outputs</li>
+              <li>No code generation required</li>
+              <li>First-class support for React Query</li>
+              <li>Built-in support for subscriptions</li>
+            </ul>
+
+            <h2>Setting Up the Project</h2>
+            <p>Let's start by installing the necessary dependencies:</p>
+
+            <pre><code>npm install @trpc/server @trpc/client @trpc/react-query zod</code></pre>
+
+            <p>Next, we'll create our tRPC router...</p>
+          </div>
+        </div>
+
+        <!-- Word Count -->
+        <div class="word-count">
+          <span>247 words</span>
+          <span>~2 min read</span>
+        </div>
+      </div>
+
+      <!-- Sidebar Overlay -->
+      <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+      <!-- Sidebar -->
+      <aside class="editor-sidebar" id="editor-sidebar">
+        <!-- Publish Settings -->
+        <div class="sidebar-section">
+          <div class="sidebar-header" onclick="toggleSection(this)">
+            <span class="sidebar-title">Publish</span>
+            <svg class="sidebar-toggle open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="sidebar-body">
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select class="form-select">
+                <option>Draft</option>
+                <option>Published</option>
+                <option>Scheduled</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Visibility</label>
+              <select class="form-select">
+                <option>Public</option>
+                <option>Private</option>
+                <option>Password Protected</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Publish Date</label>
+              <div class="schedule-row">
+                <input type="date" class="form-input" value="2025-12-08">
+                <input type="time" class="form-input" value="09:00">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category & Tags -->
+        <div class="sidebar-section">
+          <div class="sidebar-header" onclick="toggleSection(this)">
+            <span class="sidebar-title">Category & Tags</span>
+            <svg class="sidebar-toggle open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="sidebar-body">
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select class="form-select">
+                <option>TypeScript</option>
+                <option>React</option>
+                <option>DevOps</option>
+                <option>Database</option>
+                <option>Career</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tags</label>
+              <div class="tags-input">
+                <span class="tag">typescript <span class="tag-remove">&times;</span></span>
+                <span class="tag">trpc <span class="tag-remove">&times;</span></span>
+                <span class="tag">zod <span class="tag-remove">&times;</span></span>
+                <input type="text" placeholder="Add tag...">
+              </div>
+              <p class="form-hint">Press Enter to add a tag</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Featured Image -->
+        <div class="sidebar-section">
+          <div class="sidebar-header" onclick="toggleSection(this)">
+            <span class="sidebar-title">Featured Image</span>
+            <svg class="sidebar-toggle open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="sidebar-body">
+            <div class="featured-image-upload" role="button" tabindex="0" aria-label="Upload featured image">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              <span>Click to upload or drag & drop</span>
+            </div>
+            <p class="form-hint">Recommended: 1200x630px (2:1 ratio)</p>
+          </div>
+        </div>
+
+        <!-- SEO -->
+        <div class="sidebar-section">
+          <div class="sidebar-header" onclick="toggleSection(this)">
+            <span class="sidebar-title">SEO</span>
+            <svg class="sidebar-toggle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="sidebar-body" style="display: none;">
+            <div class="form-group">
+              <label class="form-label">Meta Title</label>
+              <input type="text" class="form-input" placeholder="SEO title (50-60 chars)" value="Building Type-Safe APIs with tRPC and Zod">
+              <p class="form-hint">56 / 60 characters</p>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Meta Description</label>
+              <textarea class="form-textarea" placeholder="SEO description (150-160 chars)">Learn how to create end-to-end type safety in your full-stack TypeScript applications using tRPC and Zod validation schemas.</textarea>
+              <p class="form-hint">142 / 160 characters</p>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Canonical URL</label>
+              <input type="url" class="form-input" placeholder="https://...">
+            </div>
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div class="sidebar-section">
+          <div class="sidebar-header" onclick="toggleSection(this)">
+            <span class="sidebar-title">Options</span>
+            <svg class="sidebar-toggle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="sidebar-body" style="display: none;">
+            <div class="form-group">
+              <div class="switch-row">
+                <span class="switch-label">Allow comments</span>
+                <div class="switch active" role="switch" aria-checked="true" tabindex="0" onclick="this.classList.toggle('active')"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="switch-row">
+                <span class="switch-label">Show table of contents</span>
+                <div class="switch active" role="switch" aria-checked="true" tabindex="0" onclick="this.classList.toggle('active')"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="switch-row">
+                <span class="switch-label">Feature on homepage</span>
+                <div class="switch" role="switch" aria-checked="false" tabindex="0" onclick="this.classList.toggle('active')"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Mobile Sidebar Toggle -->
+    <button class="sidebar-toggle-mobile" aria-label="Toggle settings" onclick="toggleSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </button>
+  </div>
+
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    }
+    (function() {
+      const stored = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', stored || (prefersDark ? 'dark' : 'light'));
+    })();
+
+    function toggleSidebar() {
+      document.getElementById('editor-sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    }
+
+    function toggleSection(header) {
+      const body = header.nextElementSibling;
+      const toggle = header.querySelector('.sidebar-toggle');
+      if (body.style.display === 'none') {
+        body.style.display = 'block';
+        toggle.classList.add('open');
+      } else {
+        body.style.display = 'none';
+        toggle.classList.remove('open');
+      }
+    }
+  </script>
+</body>
+</html>
